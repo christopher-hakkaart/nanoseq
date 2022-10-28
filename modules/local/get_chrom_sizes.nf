@@ -1,27 +1,28 @@
 process GET_CHROM_SIZES {
-    tag "$fasta"
-    label 'process_medium'
+    tag "$fai"
 
-    conda     (params.enable_conda ? "bioconda::samtools=1.10" : null)
+    conda (params.enable_conda ? "conda-forge::coreutils=8.31" : null)
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/samtools:1.13--h8c37831_0' :
-        'quay.io/biocontainers/samtools:1.13--h8c37831_0' }"
+        'https://depot.galaxyproject.org/singularity/gnu-wget:1.18--0' :
+        'quay.io/biocontainers/gnu-wget:1.18--0' }"
 
     input:
-    tuple path(fasta), val(name)
+    tuple val(meta), path(fai)
 
     output:
-    tuple path('*.sizes'), val(name) , emit: sizes
-    path "versions.yml"              , emit: versions
+    path '*.sizes'     , emit: sizes
+    path "versions.yml", emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
     """
-    samtools faidx $fasta
-    cut -f 1,2 ${fasta}.fai > ${fasta}.sizes
-
+    cut -f 1,2 $fai > ${fai}.sizes
     cat <<-END_VERSIONS > versions.yml
+
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        cut: \$(echo \$(cut --help 2>&1 | head -n 1 | cut -f1,2 -d' '))
     END_VERSIONS
     """
 }

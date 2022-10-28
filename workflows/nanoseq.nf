@@ -147,12 +147,14 @@ include { RNA_FUSIONS_JAFFAL               } from '../subworkflows/local/rna_fus
 /*
  * MODULE: Installed directly from nf-core/modules
  */
-include { NANOLYSE                    } from '../modules/nf-core/modules/nanolyse/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { NANOLYSE                    } from '../modules/nf-core/nanolyse/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
  * SUBWORKFLOW: Consisting entirely of nf-core/modules
  */
+
+ch_fasta              = params.fasta              ? Channel.fromPath(params.fasta).collect()                   : Channel.empty()
 
 ////////////////////////////////////////////////////
 /* --           RUN MAIN WORKFLOW              -- */
@@ -274,21 +276,21 @@ workflow NANOSEQ {
         /*
          * SUBWORKFLOW: Make chromosome size file and covert GTF to BED12
          */
-        PREPARE_GENOME ( ch_fastq )
-        ch_fasta_index = PREPARE_GENOME.out.ch_fasta_index
-        ch_gtf_bed     = PREPARE_GENOME.out.ch_gtf_bed
-        ch_fasta       = PREPARE_GENOME.out.ch_fasta
-        ch_fai         = PREPARE_GENOME.out.ch_fai
-        ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.samtools_version.first().ifEmpty(null))
-        ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.gtf2bed_version.first().ifEmpty(null))
+        //PREPARE_GENOME ( ch_fasta )
+        //ch_fasta_index = PREPARE_GENOME.out.ch_fasta_index
+        //ch_gtf_bed     = PREPARE_GENOME.out.ch_gtf_bed
+        //ch_fasta       = PREPARE_GENOME.out.ch_fasta
+        //ch_fai         = PREPARE_GENOME.out.ch_fai
+        //ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.samtools_version.first().ifEmpty(null))
+        //ch_software_versions = ch_software_versions.mix(PREPARE_GENOME.out.gtf2bed_version.first().ifEmpty(null))
 
         if (params.aligner == 'minimap2') {
 
             /*
             * SUBWORKFLOW: Align fastq files with minimap2 and sort bam files
             */
-            ALIGN_MINIMAP2 ( ch_fasta_index, ch_fastq )
-            ch_align_sam = ALIGN_MINIMAP2.out.ch_align_sam
+            ALIGN_MINIMAP2 ( ch_fastq, ch_fasta )
+            ch_align_bam = ALIGN_MINIMAP2.out.ch_align_bam
             ch_index = ALIGN_MINIMAP2.out.ch_index
             ch_software_versions = ch_software_versions.mix(ALIGN_MINIMAP2.out.minimap2_version.first().ifEmpty(null))
         } else {
@@ -297,16 +299,18 @@ workflow NANOSEQ {
              * SUBWORKFLOW: Align fastq files with graphmap2 and sort bam files
              */
             ALIGN_GRAPHMAP2 ( ch_fasta_index, ch_fastq )
-            ch_align_sam = ALIGN_GRAPHMAP2.out.ch_align_sam
+            ch_align_bam = ALIGN_GRAPHMAP2.out.ch_align_bam
             ch_index = ALIGN_GRAPHMAP2.out.ch_index
             ch_software_versions = ch_software_versions.mix(ALIGN_GRAPHMAP2.out.graphmap2_version.first().ifEmpty(null))
         }
+
+        ch_fai = Channel.empty()
 
         /*
         * SUBWORKFLOW: View, then  sort, and index bam files
         */
 
-        BAM_SORT_INDEX_SAMTOOLS ( ch_align_sam, params.call_variants, ch_fasta )
+        BAM_SORT_INDEX_SAMTOOLS ( ch_align_bam, params.call_variants, ch_fasta )
         ch_view_sortbam = BAM_SORT_INDEX_SAMTOOLS.out.sortbam
         ch_software_versions = ch_software_versions.mix(BAM_SORT_INDEX_SAMTOOLS.out.samtools_versions.first().ifEmpty(null))
         ch_samtools_multiqc  = BAM_SORT_INDEX_SAMTOOLS.out.sortbam_stats_multiqc.ifEmpty([])

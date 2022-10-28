@@ -3,12 +3,12 @@
  */
 
 include { SNIFFLES                              } from '../../modules/local/sniffles'
-include { BCFTOOLS_SORT as SNIFFLES_SORT        } from '../../modules/nf-core/modules/bcftools/sort/main'
-include { TABIX_TABIX as SNIFFLES_TABIX_VCF     } from '../../modules/nf-core/modules/tabix/tabix/main'
+include { BCFTOOLS_SORT as SNIFFLES_SORT        } from '../../modules/nf-core/bcftools/sort/main'
+include { TABIX_TABIX as SNIFFLES_TABIX_VCF     } from '../../modules/nf-core/tabix/tabix/main'
 include { CUTESV                                } from '../../modules/local/cutesv'
-include { BCFTOOLS_SORT as CUTESV_SORT          } from '../../modules/nf-core/modules/bcftools/sort/main'
-include { TABIX_BGZIP as CUTESV_BGZIP_VCF       } from '../../modules/nf-core/modules/tabix/bgzip/main'
-include { TABIX_TABIX as CUTESV_TABIX_VCF       } from '../../modules/nf-core/modules/tabix/tabix/main'
+include { BCFTOOLS_SORT as CUTESV_SORT          } from '../../modules/nf-core/bcftools/sort/main'
+include { TABIX_BGZIP as CUTESV_BGZIP_VCF       } from '../../modules/nf-core/tabix/bgzip/main'
+include { TABIX_TABIX as CUTESV_TABIX_VCF       } from '../../modules/nf-core/tabix/tabix/main'
 
 
 workflow STRUCTURAL_VARIANT_CALLING {
