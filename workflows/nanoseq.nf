@@ -310,17 +310,17 @@ workflow NANOSEQ {
         * SUBWORKFLOW: View, then  sort, and index bam files
         */
 
-        BAM_SORT_INDEX_SAMTOOLS ( ch_align_bam, params.call_variants, ch_fasta )
-        ch_view_sortbam = BAM_SORT_INDEX_SAMTOOLS.out.sortbam
-        ch_software_versions = ch_software_versions.mix(BAM_SORT_INDEX_SAMTOOLS.out.samtools_versions.first().ifEmpty(null))
-        ch_samtools_multiqc  = BAM_SORT_INDEX_SAMTOOLS.out.sortbam_stats_multiqc.ifEmpty([])
+        BAM_SORT_INDEX_SAMTOOLS ( ch_align_bam, ch_fasta )
+        ch_bam_bai = BAM_SORT_INDEX_SAMTOOLS.out.ch_bam_bai
+        //ch_software_versions = ch_software_versions.mix(BAM_SORT_INDEX_SAMTOOLS.out.samtools_versions.first().ifEmpty(null))
+        //ch_samtools_multiqc  = BAM_SORT_INDEX_SAMTOOLS.out.sortbam_stats_multiqc.ifEmpty([])
 
         if (params.call_variants && params.protocol == 'DNA') {
             /*
             * SUBWORKFLOW: Short variant calling
             */
             if (!params.skip_vc) {
-                SHORT_VARIANT_CALLING ( ch_view_sortbam, ch_fasta.map{ it [1] }, ch_fai.map{ it [1] } )
+                SHORT_VARIANT_CALLING ( ch_bam_bai, ch_fasta.map{ it [1] }, ch_fai.map{ it [1] } )
                 ch_software_versions = ch_software_versions.mix(SHORT_VARIANT_CALLING.out.ch_versions.first().ifEmpty(null))
             }
 
@@ -328,7 +328,7 @@ workflow NANOSEQ {
             * SUBWORKFLOW: Structural variant calling
             */
             if (!params.skip_sv) {
-                STRUCTURAL_VARIANT_CALLING ( ch_view_sortbam, ch_fasta.map{ it [1] }, ch_fai.map{ it [1] } )
+                STRUCTURAL_VARIANT_CALLING ( ch_bam_bai, ch_fasta.map{ it [1] }, ch_fai.map{ it [1] } )
                 ch_software_versions = ch_software_versions.mix(STRUCTURAL_VARIANT_CALLING.out.ch_versions.first().ifEmpty(null))
             }
         }
@@ -339,34 +339,35 @@ workflow NANOSEQ {
             /*
              * SUBWORKFLOW: Convert BAM -> BEDGraph -> BigWig
              */
-            BEDTOOLS_UCSC_BIGWIG ( ch_view_sortbam )
-            ch_bedtools_version = ch_bedtools_version.mix(BEDTOOLS_UCSC_BIGWIG.out.bedtools_version.first().ifEmpty(null))
-            ch_software_versions = ch_software_versions.mix(BEDTOOLS_UCSC_BIGWIG.out.bedgraphtobigwig_version.first().ifEmpty(null))
+            BEDTOOLS_UCSC_BIGWIG ( ch_bam_bai )
+            //ch_bedtools_version = ch_bedtools_version.mix(BEDTOOLS_UCSC_BIGWIG.out.bedtools_version.first().ifEmpty(null))
+            //ch_software_versions = ch_software_versions.mix(BEDTOOLS_UCSC_BIGWIG.out.bedgraphtobigwig_version.first().ifEmpty(null))
         }
         if (!params.skip_bigbed) {
 
             /*
              * SUBWORKFLOW: Convert BAM -> BED12 -> BigBED
              */
-            BEDTOOLS_UCSC_BIGBED ( ch_view_sortbam )
-            ch_bedtools_version = ch_bedtools_version.mix(BEDTOOLS_UCSC_BIGBED.out.bedtools_version.first().ifEmpty(null))
-            ch_software_versions = ch_software_versions.mix(BEDTOOLS_UCSC_BIGBED.out.bed12tobigbed_version.first().ifEmpty(null))
+            BEDTOOLS_UCSC_BIGBED ( ch_bam_bai )
+            //ch_bedtools_version = ch_bedtools_version.mix(BEDTOOLS_UCSC_BIGBED.out.bedtools_version.first().ifEmpty(null))
+            //ch_software_versions = ch_software_versions.mix(BEDTOOLS_UCSC_BIGBED.out.bed12tobigbed_version.first().ifEmpty(null))
         }
-        ch_software_versions = ch_software_versions.mix(ch_bedtools_version.first().ifEmpty(null))
+        //ch_software_versions = ch_software_versions.mix(ch_bedtools_version.first().ifEmpty(null))
 
-        ch_view_sortbam
-            .map { it -> [ it[0], it[3] ] }
-            .set { ch_sortbam }
-        ch_view_sortbam
-            .map { it -> [ it[0], it[3], it[4] ] }
-            .set { ch_nanopolish_sortbam }
+        //ch_sortbam
+        //    .map { it -> [ it[0], it[3] ] }
+        //    .set { ch_sortbam }
+        //ch_sortbam
+        //    .map { it -> [ it[0], it[3], it[4] ] }
+        //    .set { ch_nanopolish_sortbam }
     } else {
-        ch_sample
-            .map { it -> if (it[6].toString().endsWith('.bam')) [ it[0], it[6] ] }
-            .set { ch_sample_bam }
-        BAM_RENAME ( ch_sample_bam )
-        ch_sortbam = BAM_RENAME.out.bam
+        //ch_sample
+        //    .map { it -> if (it[6].toString().endsWith('.bam')) [ it[0], it[6] ] }
+        //    .set { ch_sample_bam }
+        //BAM_RENAME ( ch_sample_bam )
+        //ch_sortbam = BAM_RENAME.out.bam
     }
+    ch_sortbam = ""
 
     ch_featurecounts_gene_multiqc       = Channel.empty()
     ch_featurecounts_transcript_multiqc = Channel.empty()

@@ -18,8 +18,6 @@ workflow ALIGN_MINIMAP2 {
     ch_index         = MINIMAP2_INDEX.out.index
     minimap2_version = MINIMAP2_INDEX.out.versions
 
-    ch_index.view()
-
     /*
      * Align reads with MINIMAP2
      */

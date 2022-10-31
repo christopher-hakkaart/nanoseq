@@ -2,53 +2,38 @@
  * Sort, index BAM file and run samtools stats, flagstat and idxstats
  */
 
-include { SAMTOOLS_VIEW_BAM  } from '../../modules/local/samtools_view_bam'
+//include { SAMTOOLS_VIEW_BAM  } from '../../modules/local/samtools_view_bam'
 include { SAMTOOLS_SORT      } from '../../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX     } from '../../modules/nf-core/samtools/index/main'
-include { SAMTOOLS_SORT_INDEX } from '../../modules/local/samtools_sort_index'
-include { BAM_STATS_SAMTOOLS } from '../../subworkflows/nf-core/bam_stats_samtools'
+include { BAM_STATS_SAMTOOLS } from '../../subworkflows/local/bam_stats_samtools'
 
 workflow BAM_SORT_INDEX_SAMTOOLS {
     take:
-    ch_sam // channel: [ val(meta), [ bam ] ]
-    call_variants
+    ch_align_bam
     ch_fasta
 
     main:
     /*
-     * Sam to bam conversion
+     * Samtools sorta and index
      */
-    SAMTOOLS_VIEW_BAM  ( ch_sam )
-    if ( call_variants ) {
-        SAMTOOLS_SORT_INDEX ( SAMTOOLS_VIEW_BAM.out.bam )
-        ch_sam
-            .join( SAMTOOLS_SORT_INDEX.out.bam_bai )
-            .map { it -> [ it[0], it[1], it[2], it[4], it[5] ] }
-            .set { sortbam }
-        BAM_STATS_SAMTOOLS ( SAMTOOLS_SORT_INDEX.out.bam_bai, ch_fasta )
-    } else {
-        SAMTOOLS_SORT      ( SAMTOOLS_VIEW_BAM.out.bam )
-        SAMTOOLS_INDEX     ( SAMTOOLS_SORT.out.bam )
-        ch_sam
-            .join( SAMTOOLS_SORT.out.bam )
+        SAMTOOLS_SORT( ch_align_bam )
+
+        SAMTOOLS_INDEX( SAMTOOLS_SORT.out.bam )
+
+        SAMTOOLS_SORT.out.bam
             .join( SAMTOOLS_INDEX.out.bai )
-            .map { it -> [ it[0], it[1], it[2], it[4], it[5] ] }
-            .set { sortbam }
-        BAM_STATS_SAMTOOLS ( SAMTOOLS_SORT.out.bam.join(SAMTOOLS_INDEX.out.bai, by: [0]), ch_fasta )
-    }
+            .set { ch_bam_bai }
 
     /*
      * SUBWORKFLOW: Create stats using samtools
      */
-    BAM_STATS_SAMTOOLS.out.stats
-        .join ( BAM_STATS_SAMTOOLS.out.idxstats )
-        .join ( BAM_STATS_SAMTOOLS.out.flagstat )
-        .map  { it -> [ it[1], it[2], it[3] ] }
-        .set  { sortbam_stats_multiqc }
-    samtools_versions = BAM_STATS_SAMTOOLS.out.versions
+    BAM_STATS_SAMTOOLS ( ch_bam_bai, ch_fasta )
+
 
     emit:
-    sortbam
-    sortbam_stats_multiqc
-    samtools_versions
+    ch_bam_bai  = ch_bam_bai
+    ch_stats    = BAM_STATS_SAMTOOLS.out.stats       // channel: [ val(meta), [ stats ] ]
+    ch_flagstat = BAM_STATS_SAMTOOLS.out.flagstat // channel: [ val(meta), [ flagstat ] ]
+    ch_idxstats = BAM_STATS_SAMTOOLS.out.idxstats // channel: [ val(meta), [ idxstats ] ]
+    ch_versions = BAM_STATS_SAMTOOLS.out.versions     //    path: version.yml
 }

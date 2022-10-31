@@ -10,7 +10,7 @@ process MINIMAP2_INDEX {
     path(fasta)
 
     output:
-    path("*.mmi"), emit: index
+    path("*.mmi")                 , emit: index
     path "versions.yml"           , emit: versions
 
     when:
