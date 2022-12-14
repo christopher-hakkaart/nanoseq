@@ -2,37 +2,30 @@
  * Alignment with GRAPHMAP2
  */
 
-include { GRAPHMAP2_INDEX         } from '../../modules/local/graphmap2_index'
-include { GRAPHMAP2_ALIGN         } from '../../modules/local/graphmap2_align'
+include { GRAPHMAP2_INDEX } from '../modules/nf-core/graphmap2/index/main'
+include { GRAPHMAP2_ALIGN } from '../modules/nf-core/graphmap2/align/main'
 
 workflow ALIGN_GRAPHMAP2 {
     take:
-    ch_fasta_index // channel: [ val(meta), [ reads ] ]
-    ch_fastq
+    ch_fastq  // channel: tuple val(meta), path(reads)
+    ch_fasta  // channel: path  fasta
 
     main:
     /*
      * Create genome/transcriptome index
      */
-    GRAPHMAP2_INDEX ( ch_fasta_index )
+    GRAPHMAP2_INDEX ( ch_fasta )
     ch_index          = GRAPHMAP2_INDEX.out.index
-    graphmap2_version = GRAPHMAP2_INDEX.out.versions
-
-    ch_index
-        .cross(ch_fastq) { it -> it[-1] }
-        .flatten()
-        .collate(13)
-        .map { it -> [ it[6], it[7], it[0], it[1], it[2], it[3], it[10], it[4] ] } // [ sample, fastq, fasta, sizes, gtf, bed, is_transcripts, index ]
-        .set { ch_index }
 
     /*
      * Map reads with GRAPHMAP2
      */
-    GRAPHMAP2_ALIGN ( ch_index )
-    ch_align_sam = GRAPHMAP2_ALIGN.out.align_sam
+    GRAPHMAP2_ALIGN ( ch_index, ch_fasta, ch_index )
+    ch_align_sam = GRAPHMAP2_ALIGN.out.sam
+    graphmap2_version = GRAPHMAP2_ALIGN.out.versions
 
     emit:
     ch_index
-    graphmap2_version
     ch_align_sam
+    graphmap2_version
 }
