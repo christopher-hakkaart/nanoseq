@@ -11,12 +11,12 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 ////////////////////////////////////////////////////
 
 // Check input path parameters to see if they exist
-checkPathParamList = [ params.input, params.multiqc_config ]
+checkPathParamList = [ params.input, params.fasta, params.multiqc_config ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters (missing protocol or profile will exit the run.)
-if (params.input) { 
-    ch_input = file(params.input) 
+if (params.input) {
+    ch_input = file(params.input)
 } else {
     exit 1, 'Input samplesheet not specified!'
 }
@@ -153,8 +153,8 @@ include { RNA_FUSIONS_JAFFAL               } from '../subworkflows/local/rna_fus
 /*
  * MODULE: Installed directly from nf-core/modules
  */
-include { NANOLYSE                    } from '../modules/nf-core/modules/nanolyse/main'
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'
+include { NANOLYSE                    } from '../modules/nf-core/nanolyse/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
  * SUBWORKFLOW: Consisting entirely of nf-core/modules
@@ -327,7 +327,7 @@ workflow NANOSEQ{
         /*
          * SUBWORKFLOW: Make chromosome size file and covert GTF to BED12
          */
-        PREPARE_GENOME ( ch_fastq )
+        PREPARE_GENOME ( params.fasta, params.gtf )
         ch_fasta_index = PREPARE_GENOME.out.ch_fasta_index
         ch_gtf_bed     = PREPARE_GENOME.out.ch_gtf_bed
         ch_fasta       = PREPARE_GENOME.out.ch_fasta

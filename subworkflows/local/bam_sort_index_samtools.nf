@@ -3,8 +3,8 @@
  */
 
 include { SAMTOOLS_VIEW      } from '../../modules/nf-core/samtools/view/main'
-include { SAMTOOLS_SORT      } from '../../modules/nf-core/modules/samtools/sort/main'
-include { SAMTOOLS_INDEX     } from '../../modules/nf-core/modules/samtools/index/main'
+include { SAMTOOLS_SORT      } from '../../modules/nf-core/samtools/sort/main'
+include { SAMTOOLS_INDEX     } from '../../modules/nf-core/samtools/index/main'
 include { BAM_STATS_SAMTOOLS } from '../../subworkflows/nf-core/bam_stats_samtools'
 
 workflow BAM_SORT_INDEX_SAMTOOLS {
@@ -19,9 +19,9 @@ workflow BAM_SORT_INDEX_SAMTOOLS {
      */
 
 
-    SAMTOOLS_VIEW ( ch_input, ch_fasta, ch_qname )
+    SAMTOOLS_VIEW ( ch_bam, ch_fasta, ch_qname )
 
-    SAMTOOLS_SORT ( SAMTOOLS_VIEW_BAM.out.bam )
+    SAMTOOLS_SORT ( SAMTOOLS_VIEW.out.bam )
 
     SAMTOOLS_INDEX ( SAMTOOLS_SORT.out.bam )
 

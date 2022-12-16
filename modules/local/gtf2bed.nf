@@ -8,7 +8,7 @@ process GTF2BED {
         'quay.io/biocontainers/perl:5.26.2' }"
 
     input:
-    path gtf
+    path(gtf)
 
     output:
     path '*.bed'       , emit: bed

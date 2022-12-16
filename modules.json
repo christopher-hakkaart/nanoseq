@@ -73,12 +73,12 @@
                     "samtools/flagstat": {
                         "branch": "master",
                         "git_sha": "bbb99cb8d679555cc01c98766de7869f83283545",
-                        "installed_by": ["modules"]
+                        "installed_by": ["bam_stats_samtools", "modules"]
                     },
                     "samtools/idxstats": {
                         "branch": "master",
                         "git_sha": "f0a86eaf5bf6ca73c5571193edd00c25bfa308f5",
-                        "installed_by": ["modules"]
+                        "installed_by": ["bam_stats_samtools", "modules"]
                     },
                     "samtools/index": {
                         "branch": "master",
@@ -93,7 +93,7 @@
                     "samtools/stats": {
                         "branch": "master",
                         "git_sha": "f4eab7945952dc4934224309701a49913ea05ae6",
-                        "installed_by": ["modules"]
+                        "installed_by": ["bam_stats_samtools", "modules"]
                     },
                     "samtools/view": {
                         "branch": "master",
@@ -138,7 +138,13 @@
                 }
             },
             "subworkflows": {
-                "nf-core": {}
+                "nf-core": {
+                    "bam_stats_samtools": {
+                        "branch": "master",
+                        "git_sha": "92eb5091ae5368a60cda58b3a0ced8b36d715b0f",
+                        "installed_by": ["subworkflows"]
+                    }
+                }
             }
         }
     }

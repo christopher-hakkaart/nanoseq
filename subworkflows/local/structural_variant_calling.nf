@@ -3,11 +3,11 @@
  */
 
 include { SNIFFLES                              } from '../../modules/local/sniffles'
-include { TABIX_BGZIP as SNIFFLES_BGZIP_VCF     } from '../../modules/nf-core/modules/tabix/bgzip/main'
-include { TABIX_TABIX as SNIFFLES_TABIX_VCF     } from '../../modules/nf-core/modules/tabix/tabix/main'
+include { TABIX_BGZIP as SNIFFLES_BGZIP_VCF     } from '../../modules/nf-core/tabix/bgzip/main'
+include { TABIX_TABIX as SNIFFLES_TABIX_VCF     } from '../../modules/nf-core/tabix/tabix/main'
 include { CUTESV                                } from '../../modules/local/cutesv'
-include { TABIX_BGZIP as CUTESV_BGZIP_VCF       } from '../../modules/nf-core/modules/tabix/bgzip/main'
-include { TABIX_TABIX as CUTESV_TABIX_VCF       } from '../../modules/nf-core/modules/tabix/tabix/main'
+include { TABIX_BGZIP as CUTESV_BGZIP_VCF       } from '../../modules/nf-core/tabix/bgzip/main'
+include { TABIX_TABIX as CUTESV_TABIX_VCF       } from '../../modules/nf-core/tabix/tabix/main'
 
 
 workflow STRUCTURAL_VARIANT_CALLING {
