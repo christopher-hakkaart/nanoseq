@@ -27,13 +27,8 @@ workflow BAM_SORT_INDEX_SAMTOOLS {
 
     SAMTOOLS_SORT.out.bam
         .join(SAMTOOLS_INDEX.out.bai, by: [0])
-        .set{ ch_bam_sorted }
+        .set{ bam_sorted }
 
-    BAM_STATS_SAMTOOLS ( ch_bam_sorted, ch_fasta )
-
-    /*
-     * SUBWORKFLOW: Create stats using samtools
-     */
     BAM_STATS_SAMTOOLS ( bam_sorted, ch_fasta )
 
     BAM_STATS_SAMTOOLS.out.stats
