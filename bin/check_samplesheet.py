@@ -135,7 +135,7 @@ def check_samplesheet(file_in, file_out):
                         else:
                             print_error('path does not end with ".fastq.gz", ".fq.gz", or ".bam" and is not an existing directory with correct fast5 and/or fastq inputs.')
 
-            ## Create sample mapping dictionary = {group: {replicate : [ barcode, input_file, genome, gtf, is_transcripts, nanopolish_fast5 ]}}
+            ## Create sample mapping dictionary = {group: {replicate : [ barcode, input_file ]}}
             sample_info = [barcode, input_file]
             if group not in sample_info_dict:
                 sample_info_dict[group] = {}

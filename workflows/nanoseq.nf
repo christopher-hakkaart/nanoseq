@@ -44,9 +44,16 @@ ch_multiqc_custom_methods_description = params.multiqc_methods_description ? fil
 */
 
 //
+// MODULE: Loaded from modules/local/
+//
+include { GTF2BED         } from '../modules/local/gtf2bed'
+
+//
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { INPUT_CHECK } from '../subworkflows/local/input_check'
+include { ALIGN_GRAPHMAP2 } from '../subworkflows/local/align_graphmap2'
+include { ALIGN_MINIMAP2  } from '../subworkflows/local/align_minimap2'
+include { INPUT_CHECK     } from '../subworkflows/local/input_check'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,6 +64,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check'
 //
 // MODULE: Installed directly from nf-core/modules
 //
+include { CUSTOM_GETCHROMSIZES        } from '../modules/nf-core/custom/getchromsizes/main'
 include { FASTQC                      } from '../modules/nf-core/fastqc/main'
 include { MULTIQC                     } from '../modules/nf-core/multiqc/main'
 include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/custom/dumpsoftwareversions/main'
@@ -74,25 +82,105 @@ workflow NANOSEQ {
 
     ch_versions = Channel.empty()
 
+    // Initialize all file channels
+
+    ch_fasta = Channel.fromPath(params.fasta).ifEmpty(null)
+
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     INPUT_CHECK (
         ch_input
     )
+    ch_fastq    = INPUT_CHECK.out.reads
     ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
     // MODULE: Run FastQC
     //
     FASTQC (
-        INPUT_CHECK.out.reads
+        ch_fastq
     )
     ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique{ it.text }.collectFile(name: 'collated_versions.yml')
     )
+
+    // Function to resolve fasta and gtf file if using iGenomes
+    // Returns [ sample, input_file, barcode, fasta, gtf, is_transcripts, annotation_str, nanopolish_fast5 ]
+
+    // Resolve fasta and gtf file if using iGenomes
+
+    if (sample.fasta) {
+        if (genomeMap && genomeMap.containsKey(params.genome)) {
+            fasta = file(genomeMap[params.fasta].fasta, checkIfExists: true)
+            gtf   = file(genomeMap[params.gtf].gtf, checkIfExists: true)
+        } else {
+            fasta = file(params.fasta, checkIfExists: true)
+        }
+    }
+
+    //
+    // MODULE: Get sizes and index fasta
+    //
+    CUSTOM_GETCHROMSIZES (
+        [ [:], params.fasta ]
+    )
+    ch_sizes    = CUSTOM_GETCHROMSIZES.out.sizes
+    ch_versions = ch_versions.mix(CUSTOM_GETCHROMSIZES.out.versions.first().ifEmpty(null))
+
+    ch_is_transcripts = Channel.empty()
+    ch_qname          = Channel.empty()
+
+    //
+    // MODULE: Convert gtf to bed
+    //
+    GTF2BED (
+        params.gtf
+    )
+    ch_bed = GTF2BED.out.bed
+    ch_versions = ch_versions.mix(GTF2BED.out.versions.first().ifEmpty(null))
+
+    if (params.aligner == 'minimap2') {
+        //
+        //SUBWORKFLOW: Align fastq files with minimap2
+        //
+        ALIGN_MINIMAP2 (
+            ch_fastq,
+            ch_fasta,
+            ch_bed,
+            ch_is_transcripts
+        )
+        ch_align_sam = ALIGN_MINIMAP2.out.align_sam
+        ch_index     = ALIGN_MINIMAP2.out.index
+        ch_versions  = ch_versions.mix(ALIGN_MINIMAP2.out.versions.first().ifEmpty(null))
+    } else {
+        //
+        // SUBWORKFLOW: Align fastq files with graphmap2
+        //
+        ALIGN_GRAPHMAP2 (
+            ch_fastq,
+            ch_fasta
+        )
+        ch_align_sam = ALIGN_GRAPHMAP2.out.align_sam
+        ch_index     = ALIGN_GRAPHMAP2.out.index
+        ch_versions = ch_versions.mix(ALIGN_GRAPHMAP2.out.version.first().ifEmpty(null))
+    }
+
+    //
+    // SUBWORKFLOW: Sort and index bam file
+    //
+    //BAM_SORT_INDEX_SAMTOOLS (
+    //    ch_align_sam,   // channel: tuple val(meta), path(input), path(index)
+    //    ch_fasta, // channel: path fasta
+    //    ch_qname // channel: path qname (optional)
+    //)
+
+    //
+    // SUBWORKFLOW: Stats
+    //
+    //BAM_STATS_SAMTOOLS ( bam_sorted, ch_fasta )
 
     //
     // MODULE: MultiQC

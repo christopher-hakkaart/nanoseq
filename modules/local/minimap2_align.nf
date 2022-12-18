@@ -8,26 +8,30 @@ process MINIMAP2_ALIGN {
         'quay.io/biocontainers/minimap2:2.17--hed695b0_3' }"
 
     input:
-    tuple val(meta), path(fastq), path(fasta), path(sizes), val(gtf), val(bed), val(is_transcripts), path(index)
+    tuple val(meta), path(reads)
+    path reference
+    path bed
+    val is_transcripts
 
     output:
-    tuple val(meta), path(sizes), val(is_transcripts), path("*.sam"), emit: align_sam
-    path "versions.yml" , emit: versions
+    tuple val(meta),  path("*.sam") , emit: align_sam
+    path "versions.yml"             , emit: versions
 
     script:
     def preset    = (params.protocol == 'DNA' || is_transcripts) ? "-ax map-ont" : "-ax splice"
     def kmer      = (params.protocol == 'directRNA') ? "-k14" : ""
     def stranded  = (params.stranded || params.protocol == 'directRNA') ? "-uf" : ""
-    def junctions = (params.protocol != 'DNA' && bed) ? "--junc-bed ${file(bed)}" : ""
+    def junctions = (params.protocol != 'DNA' && ch_bed) ? "--junc-bed ${file(bed)}" : ""
     def md        = (params.call_variants && params.protocol == 'DNA') ? "--MD" : ""
     """
     minimap2 \\
+        $args \\
+        -t $task.cpus \\
         $preset \\
         $kmer \\
         $stranded \\
         $junctions \\
         $md \\
-        -t $task.cpus \\
         $index \\
         $fastq > ${meta.id}.sam
 

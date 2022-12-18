@@ -5,7 +5,7 @@
 include { SAMTOOLS_VIEW      } from '../../modules/nf-core/samtools/view/main'
 include { SAMTOOLS_SORT      } from '../../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX     } from '../../modules/nf-core/samtools/index/main'
-include { BAM_STATS_SAMTOOLS } from '../../subworkflows/nf-core/bam_stats_samtools'
+//include { BAM_STATS_SAMTOOLS } from '../../subworkflows/nf-core/bam_stats_samtools'
 
 workflow BAM_SORT_INDEX_SAMTOOLS {
     take:
@@ -14,16 +14,29 @@ workflow BAM_SORT_INDEX_SAMTOOLS {
     ch_qname // channel: path qname (optional)
 
     main:
-    /*
-     * Sam to bam conversion
-     */
+    //
+    // Module: View file with samtools
+    //
+    SAMTOOLS_VIEW (
+        ch_bam,
+        ch_fasta,
+        ch_qname
+    )
+    ch_bam      = SAMTOOLS_VIEW.out.bam
+    ch_cram     = SAMTOOLS_VIEW.out.cram
+    ch_sam      = SAMTOOLS_VIEW.out.sam
+    ch_bai      = SAMTOOLS_VIEW.out.bai
+    ch_csi      = SAMTOOLS_VIEW.out.csi
+    ch_crai     = SAMTOOLS_VIEW.out.crai
+    ch_versions = ch_versions.mix( SAMTOOLS_VIEW.out.versions.first() )
 
+    SAMTOOLS_SORT (
+        SAMTOOLS_VIEW.out.bam
+    )
 
-    SAMTOOLS_VIEW ( ch_bam, ch_fasta, ch_qname )
-
-    SAMTOOLS_SORT ( SAMTOOLS_VIEW.out.bam )
-
-    SAMTOOLS_INDEX ( SAMTOOLS_SORT.out.bam )
+    SAMTOOLS_INDEX (
+        SAMTOOLS_SORT.out.bam
+    )
 
     SAMTOOLS_SORT.out.bam
         .join(SAMTOOLS_INDEX.out.bai, by: [0])
