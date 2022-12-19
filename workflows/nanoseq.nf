@@ -87,6 +87,12 @@ workflow NANOSEQ {
     ch_fasta = Channel.fromPath(params.fasta).ifEmpty(null)
 
     //
+    // SUBWORKFLOW: Basecalling
+    //
+
+    
+
+    //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     INPUT_CHECK (
@@ -106,20 +112,6 @@ workflow NANOSEQ {
     CUSTOM_DUMPSOFTWAREVERSIONS (
         ch_versions.unique{ it.text }.collectFile(name: 'collated_versions.yml')
     )
-
-    // Function to resolve fasta and gtf file if using iGenomes
-    // Returns [ sample, input_file, barcode, fasta, gtf, is_transcripts, annotation_str, nanopolish_fast5 ]
-
-    // Resolve fasta and gtf file if using iGenomes
-
-    if (sample.fasta) {
-        if (genomeMap && genomeMap.containsKey(params.genome)) {
-            fasta = file(genomeMap[params.fasta].fasta, checkIfExists: true)
-            gtf   = file(genomeMap[params.gtf].gtf, checkIfExists: true)
-        } else {
-            fasta = file(params.fasta, checkIfExists: true)
-        }
-    }
 
     //
     // MODULE: Get sizes and index fasta

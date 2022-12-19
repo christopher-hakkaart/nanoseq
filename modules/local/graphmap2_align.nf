@@ -8,18 +8,24 @@ process GRAPHMAP2_ALIGN {
         'quay.io/biocontainers/graphmap:0.6.3--he513fc3_0' }"
 
     input:
-    tuple val(meta), path(fastq), path(fasta), path(sizes), val(gtf), val(bed), val(is_transcripts), path(index)
+    tuple val(meta), path(reads)
+    path  fasta
+    path  index
+    val is_transcripts
 
     output:
-    tuple val(meta), path(sizes), val(is_transcripts), path("*.sam"), emit: align_sam
+    tuple val(meta), path("*.sam"), emit: sam
     path "versions.yml"           , emit: versions
 
     script:
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def preset    = (params.protocol == 'DNA' || is_transcripts) ? "" : "-x rnaseq"
     def junctions = (params.protocol != 'DNA' && !is_transcripts && gtf) ? "--gtf $gtf" : ""
     """
     graphmap2 \\
         align \\
+        $args \\
         $preset \\
         $junctions \\
         -t $task.cpus \\

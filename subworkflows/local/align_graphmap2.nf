@@ -3,7 +3,7 @@
  */
 
 include { GRAPHMAP2_INDEX } from '../../modules/nf-core/graphmap2/index/main'
-include { GRAPHMAP2_ALIGN } from '../../modules/nf-core/graphmap2/align/main'
+include { GRAPHMAP2_ALIGN } from '../../modules/local/graphmap2_align'
 
 workflow ALIGN_GRAPHMAP2 {
     take:
