@@ -51,9 +51,10 @@ include { GTF2BED         } from '../modules/local/gtf2bed'
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { ALIGN_GRAPHMAP2 } from '../subworkflows/local/align_graphmap2'
-include { ALIGN_MINIMAP2  } from '../subworkflows/local/align_minimap2'
-include { INPUT_CHECK     } from '../subworkflows/local/input_check'
+include { ALIGN_GRAPHMAP2          } from '../subworkflows/local/align_graphmap2'
+include { ALIGN_MINIMAP2           } from '../subworkflows/local/align_minimap2'
+include { FASTA_BASECALLING_DORADO } from '../subworkflows/local/fasta_basecalling_dorado'
+include { INPUT_CHECK              } from '../subworkflows/local/input_check'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +91,7 @@ workflow NANOSEQ {
     // SUBWORKFLOW: Basecalling
     //
 
-    
+    FASTA_BASECALLING_DORADO ()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
