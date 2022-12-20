@@ -86,12 +86,17 @@ workflow NANOSEQ {
     // Initialize all file channels
 
     ch_fasta = Channel.fromPath(params.fasta).ifEmpty(null)
+    ch_gtf = Channel.fromPath(params.gtf).ifEmpty(null)
 
-    //
-    // SUBWORKFLOW: Basecalling
-    //
+    if(params.input_fast5) {
 
-    FASTA_BASECALLING_DORADO ()
+        ch_fast5 = Channel.fromPath(params.input_fast5)
+
+        //
+        // SUBWORKFLOW: Basecalling
+        //
+        FASTA_BASECALLING_DORADO ( ch_fast5 )
+        }
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files

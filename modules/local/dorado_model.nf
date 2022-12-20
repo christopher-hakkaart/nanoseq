@@ -6,10 +6,10 @@ process DORADO_MODEL {
         'docker.io/nanoporetech/dorado:sha097d9c8abc39b8266e3ee58f531f5ef8944a02c3' }"
 
     input:
-    val model
+    val modelname
 
     output:
-    path "*"            , emit: model
+    path "${modelname}" , emit: model
     path "versions.yml" , emit: versions
 
     script:
@@ -17,7 +17,7 @@ process DORADO_MODEL {
 
     """
     dorado download \\
-        --model ${model}
+        --model ${modelname}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

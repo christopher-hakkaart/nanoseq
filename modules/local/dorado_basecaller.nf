@@ -6,9 +6,11 @@ process DORADO_BASECALLER {
         'docker.io/nanoporetech/dorado:sha097d9c8abc39b8266e3ee58f531f5ef8944a02c3' }"
 
     input:
-    tuple val(meta), path
+    path folder
+    path model
 
     output:
+    path "*", emit: fastq
 
     script:
     def emitfastq           = (params.emit_fastq)            ? "--emit-fastq" : ""
@@ -18,19 +20,15 @@ process DORADO_BASECALLER {
 
     """
     dorado basecaller \\
-        $model \\
-        $folder \\
-        -x ${params.device} \\
+        ${model} \\
+        ${folder}/ \\
+        --device ${params.device} \\
         -n ${params.max_reads} \\
-        -b ${params.batchsize} \\
-        -c ${params.chunksize} \\
+        -b ${params.batch_size} \\
+        -c ${params.chunk_size} \\
         -o ${params.overlap} \\
-        -r ${params.numrunners} \\
-        ${emitfastq}  \\
-        ${modifiedbases} \\
-        ${modifiedbasesmodels} \\
-        ${emitmoves} \\
-        > ${meta.id}.fastq
+        -r ${params.num_runners} \\
+        ${emitfastq} > sample.fastq
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -38,3 +36,8 @@ process DORADO_BASECALLER {
     END_VERSIONS
     """
 }
+
+//        ${emitfastq} \\
+//        ${modifiedbases} \\
+//        ${modifiedbasesmodels} \\
+//        ${emitmoves} \\

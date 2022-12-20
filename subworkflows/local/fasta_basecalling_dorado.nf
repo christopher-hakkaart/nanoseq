@@ -9,6 +9,7 @@ include { DORADO_BASECALLER } from '../../modules/local/dorado_basecaller'
 workflow FASTA_BASECALLING_DORADO {
 
     take:
+    ch_fast5 // channel: path fast5
 
     main:
 
@@ -50,23 +51,23 @@ workflow FASTA_BASECALLING_DORADO {
     ]
 
     if (params.model && doradoModelList.contains(params.model)) {
-            if (params.input_path) {
-                ch_model = Channel.from( params.model, checkIfExists: true )
-            } else {
-                exit 1, "Please provide a valid dorado model. Valid options: ${doradoModelList}"
-            }
+        ch_modelname = Channel.from( params.model )
+    } else {
+        exit 1, "Please provide a valid dorado model. Valid options: ${doradoModelList}"
+    }
 
     DORADO_MODEL (
-        ch_model
+        ch_modelname
     )
     ch_model    = DORADO_MODEL.out.model
     ch_versions = ch_versions.mix( DORADO_MODEL.out.versions.first() )
 
-    //DORADO_BASECALLER (
-    //    ch_
-    //)
-    //ch_fastq    =
-    //ch_versions = ch_versions.mix( DORADO_MODEL.out.versions.first() )
+    DORADO_BASECALLER (
+        ch_fast5,
+        ch_model
+    )
+    ch_fastq    = DORADO_BASECALLER.out.fastq
+    ch_versions = ch_versions.mix( DORADO_MODEL.out.versions.first() )
 
 
     emit:
